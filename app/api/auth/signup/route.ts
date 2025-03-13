@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { db } from "@/lib/db";
+import prisma from "@/lib/db";
 import { signUpSchema } from "@/lib/validations/auth";
 
 export async function POST(req: Request) {
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const { name, email, password } = signUpSchema.parse(body);
 
     // Check if user already exists
-    const existingUser = await db.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create the user
-    const user = await db.user.create({
+    const user = await prisma.user.create({
       data: {
         name,
         email,

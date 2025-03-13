@@ -1,12 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { db } from "@/lib/db";
+import prisma from "@/lib/db";
 import bcrypt from "bcrypt";
 
 export const authOptions: NextAuthOptions = {
-  session: {
-    strategy: "jwt",
-  },
   pages: {
     signIn: "/auth/signin",
   },
@@ -22,9 +19,12 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
-        const user = await db.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: {
             email: credentials.email,
+          },
+          include: {
+            linkedinDetails: true,
           },
         });
 
@@ -42,43 +42,47 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          needsLinkedinConn: !user.linkedinDetails,
+          linkedinDetails: {
+            email: user.linkedinDetails?.email,
+            avatar: user.linkedinDetails?.avatar!,
+            name: user.linkedinDetails?.name!,
+            headline: user.linkedinDetails?.headline!,
+            username: user.linkedinDetails?.username!,
+            accountId: user.linkedinDetails?.accountId!,
+            isPremium: user.linkedinDetails?.isPremium!,
+          },
         };
       },
     }),
   ],
   callbacks: {
-    async session({ token, session, trigger, newSession }) {
-      if (trigger === "update" && newSession?.user) {
-        return { ...session, user: { ...session.user, ...newSession.user } };
+    async jwt({ token, user, account, profile, trigger, session }) {
+      if (trigger === "update" && session?.user) {
+        return { ...token, ...session.user };
       }
-
-      if (token && session.user) {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.needsLinkedinConn = user.needsLinkedinConn;
+        token.linkedinDetails = user?.linkedinDetails;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
         session.user.id = token.id as string;
-        session.user.name = token.name;
-        session.user.email = token.email;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
+        session.user.needsLinkedinConn = token.needsLinkedinConn as boolean;
+        session.user.linkedinDetails = token.linkedinDetails;
       }
-
       return session;
     },
-    async jwt({ token, user }) {
-      const dbUser = await db.user.findFirst({
-        where: {
-          email: token.email!,
-        },
-      });
-
-      if (!dbUser) {
-        if (user) {
-          token.id = user?.id;
-        }
-        return token;
-      }
-
-      return {
-        id: dbUser.id,
-        name: dbUser.name,
-        email: dbUser.email,
-      };
-    },
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
   },
 };

@@ -8,10 +8,27 @@ datasource db {
 }
 
 model User {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  name            String?
+  email           String           @unique
+  password        String
+  linkedinDetails LinkedinDetails?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model LinkedinDetails {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  email     String
   name      String?
-  email     String   @unique
-  password  String
+  headline  String?
+  avatar    String?
+  username  String?
+  accountId String?
+  isPremium Boolean?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
 }
