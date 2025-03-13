@@ -233,7 +233,6 @@ export class LinkedinService {
                 },
                 update: {
                   ...connection,
-                  syncedAt: syncStartTime,
                 },
                 create: {
                   ...connection,

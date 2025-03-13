@@ -7,7 +7,9 @@ import prisma from "@/lib/db";
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const { searchParams } = new URL(req.url);
+    const trackPersonId = searchParams.get("trackPersonId");
+    if (!session?.user?.email || !trackPersonId) {
       return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
     }
 
@@ -20,7 +22,7 @@ export async function GET(req: NextRequest) {
     }
 
     const trackingUrls = await prisma.searchUrls.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, trackPersonId: trackPersonId },
       include: {
         trackPerson: true,
       },
