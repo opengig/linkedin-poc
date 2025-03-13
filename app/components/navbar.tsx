@@ -16,13 +16,13 @@ export function Navbar() {
       label: "Dashboard",
       href: "/dashboard",
       icon: FaHome,
-      active: pathname === "/dashboard",
+      active: pathname.startsWith("/dashboard"),
     },
     {
       label: "Profile",
       href: "/profile",
       icon: FaUser,
-      active: pathname === "/profile",
+      active: pathname.startsWith("/profile"),
     },
   ];
 

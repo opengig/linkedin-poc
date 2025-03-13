@@ -9,7 +9,7 @@ import { FaLinkedin, FaPlus, FaTrash } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { Trash } from "lucide-react";
+import { ExternalLink, Trash } from "lucide-react";
 import Link from "next/link";
 interface TrackedProfile {
   id: string;
@@ -163,8 +163,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0 relative">
                     <Link
-                      href={profile.profileUrl}
-                      target="_blank"
+                      href={`/dashboard/${profile.id}`}
                       className="text-lg font-semibold text-gray-900 truncate hover:underline"
                     >
                       {profile.name}
@@ -173,11 +172,17 @@ export default function DashboardPage() {
                     <p className="text-sm text-gray-500 truncate">{profile.location}</p>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center space-x-2 justify-end">
+                <div className="mt-2 flex items-center space-x-4 justify-end">
                   <Trash
                     size={16}
                     className="hover:text-red-500 text-gray-500 cursor-pointer"
                     onClick={() => handleDelete(profile.id)}
+                  />
+                  <ExternalLink
+                    size={16}
+                    className="hover:text-blue-500 text-gray-500 cursor-pointer"
+                    href={profile.profileUrl}
+                    target="_blank"
                   />
                 </div>
               </CardContent>
