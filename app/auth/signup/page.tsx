@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { SignUpFormData, signUpSchema } from "@/lib/validations/auth";
 
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { signIn } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 export default function SignUpPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -26,6 +28,7 @@ export default function SignUpPage() {
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
+      setIsLoading(true);
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
@@ -41,9 +44,25 @@ export default function SignUpPage() {
         return;
       }
 
-      router.push("/auth/signin");
+      // Sign in the user automatically after successful registration
+      const signInResult = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        setError("Failed to sign in automatically. Please try signing in manually.");
+        router.push("/auth/signin");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
     } catch (error) {
       setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -97,9 +116,9 @@ export default function SignUpPage() {
                 )}
               />
               {error && <div className="text-sm text-red-500 dark:text-red-500">{error}</div>}
-              <Button type="submit" className="w-full">
+              <LoadingButton type="submit" className="w-full" isLoading={isLoading}>
                 Sign Up
-              </Button>
+              </LoadingButton>
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">

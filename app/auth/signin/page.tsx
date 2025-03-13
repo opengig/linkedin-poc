@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { SignInFormData, signInSchema } from "@/lib/validations/auth";
 
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 export default function SignInPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -26,6 +27,7 @@ export default function SignInPage() {
 
   const onSubmit = async (data: SignInFormData) => {
     try {
+      setIsLoading(true);
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
@@ -41,6 +43,8 @@ export default function SignInPage() {
       router.refresh();
     } catch (error) {
       setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,9 +85,9 @@ export default function SignInPage() {
                 )}
               />
               {error && <div className="text-sm text-red-500 dark:text-red-500">{error}</div>}
-              <Button type="submit" className="w-full">
+              <LoadingButton type="submit" className="w-full" isLoading={isLoading}>
                 Sign In
-              </Button>
+              </LoadingButton>
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">

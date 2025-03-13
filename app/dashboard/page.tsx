@@ -1,11 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      setIsLoading(true);
+      await signOut({ callbackUrl: "/auth/signin" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -18,9 +29,9 @@ export default function DashboardPage() {
             <p>Welcome, {session?.user?.name || "User"}!</p>
             <p>Email: {session?.user?.email}</p>
           </div>
-          <Button onClick={() => signOut({ callbackUrl: "/auth/signin" })} variant="outline" className="w-full">
+          <LoadingButton onClick={handleSignOut} variant="outline" className="w-full" isLoading={isLoading}>
             Sign Out
-          </Button>
+          </LoadingButton>
         </CardContent>
       </Card>
     </div>
