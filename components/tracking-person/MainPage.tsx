@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 const MainPage = ({ person }: { person: any }) => {
   const { data: session } = useSession();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [urls, setUrls] = useState<any[]>([]);
 
@@ -29,8 +30,23 @@ const MainPage = ({ person }: { person: any }) => {
   };
 
   const handleSync = async () => {
-    toast.success("Syncing...");
-    await fetchUrls();
+    try {
+      setIsSyncing(true);
+      const { data } = await axios.post("/api/linkedin/connections", {
+        trackPersonId: person.id,
+        userId: session?.user.id,
+      });
+      if (data.success) {
+        toast.success("Synced successfully");
+      } else {
+        toast.error("Failed to sync");
+      }
+    } catch (error) {
+      console.error("Error syncing:", error);
+      toast.error("Failed to sync");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   useEffect(() => {
@@ -41,7 +57,7 @@ const MainPage = ({ person }: { person: any }) => {
 
   return (
     <div>
-      <Header onAddUrl={() => setShowAddForm(true)} onSync={handleSync} person={person} />
+      <Header onAddUrl={() => setShowAddForm(true)} onSync={handleSync} person={person} isSyncing={isSyncing} />
       <NewUrlForm
         fetchUrls={fetchUrls}
         showAddForm={showAddForm}

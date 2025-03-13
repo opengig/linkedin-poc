@@ -1,9 +1,20 @@
-import { RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import React from "react";
 import { Button } from "../ui/button";
 import { Plus } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
-const Header = ({ person, onAddUrl, onSync }: { person: any; onAddUrl: () => void; onSync: () => void }) => {
+const Header = ({
+  person,
+  onAddUrl,
+  onSync,
+  isSyncing,
+}: {
+  person: any;
+  onAddUrl: () => void;
+  onSync: () => void;
+  isSyncing: boolean;
+}) => {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
@@ -18,10 +29,18 @@ const Header = ({ person, onAddUrl, onSync }: { person: any; onAddUrl: () => voi
           <Plus />
           New Search Url
         </Button>
-        <Button variant="default" className="flex items-center space-x-2" onClick={onSync}>
-          <RefreshCw />
-          Sync Connections
-        </Button>
+
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <Button variant="default" className="flex items-center space-x-2" onClick={onSync} disabled={isSyncing}>
+              {isSyncing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+              Sync Connections
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">
+            Note: This will sync connections from all the search urls below
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

@@ -119,7 +119,7 @@ const SearchUrls = ({ urls, fetchUrls }: SearchUrlsProps) => {
                     href={url.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline break-all"
+                    className="text-blue-500 hover:underline break-all text-sm"
                   >
                     {url.url}
                   </a>
