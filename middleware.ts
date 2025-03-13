@@ -4,7 +4,6 @@ import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
-  console.log("token", token);
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isConnectPage = request.nextUrl.pathname === "/connect-linkedin";
 
