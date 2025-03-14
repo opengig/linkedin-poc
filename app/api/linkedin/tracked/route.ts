@@ -109,9 +109,16 @@ export async function DELETE(req: Request) {
     if (!profile) {
       return NextResponse.json({ error: "Profile not found", success: false }, { status: 404 });
     }
-
-    await prisma.trackPerson.delete({
-      where: { id },
+    await prisma.$transaction(async (tx) => {
+      await tx.connection.deleteMany({
+        where: { trackPersonId: id },
+      });
+      await tx.searchUrls.deleteMany({
+        where: { trackPersonId: id },
+      });
+      await tx.trackPerson.delete({
+        where: { id },
+      });
     });
 
     return NextResponse.json({ success: true, message: "Profile deleted successfully" });

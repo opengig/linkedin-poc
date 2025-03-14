@@ -146,7 +146,7 @@ export class LinkedinService {
     limit: number;
   }) {
     try {
-      console.log(`Fetching connections for ${searchUrl} on page ${page}`);
+      console.log(`Fetching connections for url on page ${page}`);
       const url = cursor
         ? `${UNIPINE_BASE_URL}/api/v1/linkedin/search?account_id=${accountId}&cursor=${cursor}&limit=${limit}`
         : `${UNIPINE_BASE_URL}/api/v1/linkedin/search?account_id=${accountId}&limit=${limit}`;
@@ -160,7 +160,7 @@ export class LinkedinService {
           },
         }
       );
-      console.log(`Fetched ${data?.items?.length} connections for ${searchUrl} on page ${page}`);
+      console.log(`Fetched ${data?.items?.length} connections for url on page ${page}`);
       return { items: data.items, cursor: data.cursor };
     } catch (error: any) {
       console.error(`Error fetching connections for ${searchUrl} on page ${page}: ${error.message}`);
@@ -207,12 +207,16 @@ export class LinkedinService {
 
           localTotalConnections += items.length;
           cursor = nextCursor;
-          const randomSleep = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
-          await new Promise((resolve) => setTimeout(resolve, randomSleep));
+          if (cursor && localTotalConnections < 500) {
+            const randomSleep = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
+            await new Promise((resolve) => setTimeout(resolve, randomSleep));
+          }
         } while (cursor && localTotalConnections < 500);
         index++;
-        const randomSleep = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
-        await new Promise((resolve) => setTimeout(resolve, randomSleep));
+        if (index < searchUrls.length - 1) {
+          const randomSleep = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
+          await new Promise((resolve) => setTimeout(resolve, randomSleep));
+        }
       }
 
       if (connections.length > 0) {

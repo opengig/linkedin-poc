@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       trackPersonId: trackPersonId,
     };
 
-    if (syncDate) {
+    if (syncDate && syncDate !== "all") {
       const parsedDate = new Date(syncDate);
       if (isNaN(parsedDate.getTime())) {
         return NextResponse.json({
