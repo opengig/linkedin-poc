@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     }
 
     const existingProfile = await prisma.trackPerson.findUnique({
-      where: { username },
+      where: { addedBy_username: { username, addedBy: session.user.id } },
     });
 
     if (existingProfile) {

@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const trackPersonId = searchParams.get("trackPersonId");
+    const searchUrlIds = searchParams.get("searchUrlIds");
 
     if (!trackPersonId) {
       return NextResponse.json({ error: "Track person ID is required", success: false });
@@ -47,6 +48,11 @@ export async function GET(request: NextRequest) {
       whereClause.syncedAt = parsedDate;
     }
 
+    if (searchUrlIds && searchUrlIds !== "all") {
+      const searchUrlIdsArray = searchUrlIds.split(",");
+      whereClause.searchUrlId = { in: searchUrlIdsArray };
+    }
+
     // Get unique sync dates
     const uniqueSyncDates = await prisma.connection.findMany({
       where: {
@@ -62,6 +68,16 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const uniqueSearchUrlIds = await prisma.searchUrls.findMany({
+      where: {
+        userId: session.user.id,
+        trackPersonId: trackPersonId || "",
+      },
+      distinct: ["url"],
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
     // Get total count for pagination
     const totalConnections = await prisma.connection.count({
       where: whereClause,
@@ -74,12 +90,17 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       skip: (page - 1) * limit,
       take: limit,
+      include: {
+        searchUrl: true,
+      },
       orderBy: [
         {
           syncedAt: "desc",
         },
         {
-          id: "asc", // Secondary sort by id for stability
+          searchUrl: {
+            url: "asc",
+          },
         },
       ],
     });
@@ -89,6 +110,11 @@ export async function GET(request: NextRequest) {
       data: {
         connections,
         syncDates: uniqueSyncDates.map((date) => date.syncedAt),
+        searchUrlData: uniqueSearchUrlIds.map((url) => ({
+          url: url.url,
+          title: url.title,
+          id: url.id,
+        })),
         pagination: {
           total: totalConnections,
           currentPage: page,
@@ -126,7 +152,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const searchUrlsArray = searchUrls.map((searchUrl) => searchUrl.url);
+    const searchUrlsArray = searchUrls.map((searchUrl) => {
+      return {
+        url: searchUrl.url,
+        title: searchUrl.title,
+        id: searchUrl.id,
+      };
+    });
 
     await LinkedinService.syncConnections(searchUrlsArray, linkedinDetails.accountId, userId, trackPersonId);
     return NextResponse.json({ success: true });

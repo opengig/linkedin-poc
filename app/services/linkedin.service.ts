@@ -169,9 +169,9 @@ export class LinkedinService {
     }
   }
 
-  static async syncConnections(searchUrls: string[], accountId: string, userId: string, trackPersonId: string) {
+  static async syncConnections(searchUrlData: any[], accountId: string, userId: string, trackPersonId: string) {
     try {
-      console.log(`Syncing connections for ${searchUrls.length} search URLs`);
+      console.log(`Syncing connections for ${searchUrlData.length} search URLs`);
       console.log(`Each page has max 50 connections`);
       const syncStartTime = new Date();
       let cursor = null;
@@ -179,14 +179,14 @@ export class LinkedinService {
       let totalConnections = 0;
       let index = 0;
 
-      for (const searchUrl of searchUrls) {
-        console.log(`Syncing connections for url number ${index + 1} of ${searchUrls.length}`);
+      for (const searchUrl of searchUrlData) {
+        console.log(`Syncing connections for url number ${index + 1} of ${searchUrlData.length}`);
         let localTotalConnections = 0;
         let page = 0;
         do {
           const { items, cursor: nextCursor } = await this.fetchConnections({
             accountId,
-            searchUrl,
+            searchUrl: searchUrl.url,
             page: ++page,
             cursor,
             limit: 50,
@@ -202,6 +202,7 @@ export class LinkedinService {
                 insight: item?.insight || null,
                 profileUrl: `https://www.linkedin.com/in/${item.public_identifier}`,
                 degree: item.network_distance || "",
+                searchUrlId: searchUrl.id,
               }))
               .filter((connection: any) => connection.username !== null);
 
@@ -216,7 +217,7 @@ export class LinkedinService {
         } while (cursor && localTotalConnections < 500);
         index++;
         totalConnections += localTotalConnections;
-        if (index < searchUrls.length - 1) {
+        if (index < searchUrlData.length - 1) {
           const randomSleep = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
           await new Promise((resolve) => setTimeout(resolve, randomSleep));
         }
@@ -250,6 +251,7 @@ export class LinkedinService {
                     profileUrl: connection.profileUrl,
                     degree: connection.degree || "",
                     syncedAt: syncStartTime,
+                    searchUrlId: connection.searchUrlId,
                   },
                   update: {
                     name: connection.name || "",
@@ -258,6 +260,7 @@ export class LinkedinService {
                     location: connection.location || "",
                     profileUrl: connection.profileUrl,
                     degree: connection.degree || "",
+                    searchUrlId: connection.searchUrlId,
                   },
                 });
               } catch (error: any) {

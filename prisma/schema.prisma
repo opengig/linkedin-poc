@@ -41,7 +41,7 @@ model LinkedinDetails {
 model TrackPerson {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   addedBy    String   @db.ObjectId
-  username   String   @unique
+  username   String
   name       String
   avatar     String?
   title      String
@@ -54,11 +54,15 @@ model TrackPerson {
   addedByUser User         @relation(fields: [addedBy], references: [id])
   searchUrls  SearchUrls[]
   connections Connection[]
+
+  @@unique([addedBy, username])
+  @@index([addedBy])
+  @@index([username])
 }
 
 model SearchUrls {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  url           String   @unique
+  url           String
   title         String
   userId        String   @db.ObjectId
   trackPersonId String   @db.ObjectId
@@ -66,14 +70,21 @@ model SearchUrls {
   updatedAt     DateTime @updatedAt
 
   // Relations
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trackPerson TrackPerson @relation(fields: [trackPersonId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackPerson TrackPerson  @relation(fields: [trackPersonId], references: [id], onDelete: Cascade)
+  connections Connection[]
+
+  @@unique([userId, trackPersonId, url])
+  @@index([userId])
+  @@index([trackPersonId])
+  @@index([userId, trackPersonId])
 }
 
 model Connection {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   userId        String   @db.ObjectId
   trackPersonId String   @db.ObjectId
+  searchUrlId   String?  @db.ObjectId
   username      String
   name          String
   avatar        String?
@@ -89,6 +100,7 @@ model Connection {
   // Relations
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   trackPerson TrackPerson @relation(fields: [trackPersonId], references: [id], onDelete: Cascade)
+  searchUrl   SearchUrls? @relation(fields: [searchUrlId], references: [id], onDelete: Cascade)
 
   @@unique([userId, trackPersonId, username])
   @@index([userId])

@@ -9,11 +9,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
+import { MultiSelect } from "../ui/multi-select";
 interface Connection {
   id: string;
   name: string;
   profileUrl: string;
+  searchUrl: SearchUrl;
   syncedAt: string;
+}
+
+interface SearchUrl {
+  url: string;
+  title: string;
+  id: string;
 }
 
 interface PaginationInfo {
@@ -30,6 +38,7 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
   const { id } = useParams();
   const [connections, setConnections] = useState<Connection[]>([]);
   const [syncDates, setSyncDates] = useState<string[]>([]);
+  const [searchUrlOptions, setSearchUrlOptions] = useState<{ label: string; value: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
@@ -38,6 +47,7 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
   });
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
+  const [selectedSearchUrlIds, setSelectedSearchUrlIds] = useState<string[]>([]);
   const { data: session } = useSession();
 
   const fetchConnections = async (pageNum: number = currentPage) => {
@@ -53,10 +63,19 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
         params.append("syncDate", selectedDate);
       }
 
+      if (selectedSearchUrlIds.length > 0) {
+        params.append("searchUrlIds", selectedSearchUrlIds.join(","));
+      }
+
       const { data } = await axios.get(`/api/linkedin/connections?${params}`);
       if (data.success) {
         setConnections(data.data.connections);
         setSyncDates(data.data.syncDates);
+        const newOptions = data.data.searchUrlData.map((url: SearchUrl) => ({
+          label: url.title,
+          value: url.id,
+        }));
+        setSearchUrlOptions(newOptions);
         setPagination(data.data.pagination);
       } else {
         toast.error("Failed to fetch connections");
@@ -73,7 +92,7 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
     if (session?.user.id) {
       fetchConnections(currentPage);
     }
-  }, [selectedDate, session?.user.id, currentPage]);
+  }, [selectedDate, session?.user.id, currentPage, selectedSearchUrlIds]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -83,6 +102,10 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedDate]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedSearchUrlIds]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
@@ -125,6 +148,16 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
               ))}
             </SelectContent>
           </Select>
+          <MultiSelect
+            options={searchUrlOptions}
+            onValueChange={(value) => {
+              setSelectedSearchUrlIds(value);
+            }}
+            defaultValue={searchUrlOptions.map((option) => option.value)}
+            placeholder="Select URLs"
+            variant="inverted"
+            maxCount={Infinity}
+          />
         </div>
       </div>
 
@@ -134,37 +167,39 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Profile URL</TableHead>
+              <TableHead>Search URL</TableHead>
               <TableHead>Synced At</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center">
+                <TableCell colSpan={4} className="text-center">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : connections.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center">
+                <TableCell colSpan={4} className="text-center">
                   No connections found
                 </TableCell>
               </TableRow>
             ) : (
               connections.map((connection) => (
                 <TableRow key={connection.id}>
-                  <TableCell>{connection.name}</TableCell>
+                  <TableCell>{connection?.name || "N/A"}</TableCell>
                   <TableCell>
                     <a
-                      href={connection.profileUrl}
+                      href={connection?.profileUrl || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800"
                     >
-                      {connection.profileUrl}
+                      {connection?.profileUrl || "N/A"}
                     </a>
                   </TableCell>
-                  <TableCell>{formatDate(connection.syncedAt)}</TableCell>
+                  <TableCell>{connection?.searchUrl?.title || "N/A"}</TableCell>
+                  <TableCell>{formatDate(connection?.syncedAt)}</TableCell>
                 </TableRow>
               ))
             )}
