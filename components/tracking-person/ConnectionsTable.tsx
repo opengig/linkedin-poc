@@ -26,9 +26,7 @@ interface ConnectionsTableRef {
   fetchConnections: () => Promise<void>;
 }
 
-interface ConnectionsTableProps {}
-
-const ConnectionsTable = React.forwardRef<ConnectionsTableRef, ConnectionsTableProps>((props, ref) => {
+const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
   const { id } = useParams();
   const [connections, setConnections] = useState<Connection[]>([]);
   const [syncDates, setSyncDates] = useState<string[]>([]);
@@ -182,5 +180,7 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef, ConnectionsTableP
     </Card>
   );
 });
+
+ConnectionsTable.displayName = "ConnectionsTable";
 
 export default ConnectionsTable;

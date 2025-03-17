@@ -191,21 +191,22 @@ export class LinkedinService {
           });
           console.log(`Fetched ${items.length} connections for url no. ${index + 1} of ${searchUrls.length}`);
           if (items.length > 0) {
-            const transformedConnections = items.map((item: any) => ({
-              username: item.public_identifier,
-              name: item.name,
-              avatar: item.profile_picture_url,
-              title: item.headline,
-              location: item.location,
-              insight: item?.insight || null,
-              profileUrl: `https://www.linkedin.com/in/${item.public_identifier}`,
-              degree: item.network_distance || "",
-            }));
+            const transformedConnections = items
+              .map((item: any) => ({
+                username: item.public_identifier,
+                name: item.name,
+                avatar: item.profile_picture_url,
+                title: item.headline,
+                location: item.location,
+                insight: item?.insight || null,
+                profileUrl: `https://www.linkedin.com/in/${item.public_identifier}`,
+                degree: item.network_distance || "",
+              }))
+              .filter((connection: any) => connection.username !== null);
 
             connections.push(...transformedConnections);
+            localTotalConnections += transformedConnections.length;
           }
-
-          localTotalConnections += items.length;
           cursor = nextCursor;
           if (cursor && localTotalConnections < 500) {
             const randomSleep = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
@@ -213,6 +214,7 @@ export class LinkedinService {
           }
         } while (cursor && localTotalConnections < 500);
         index++;
+        totalConnections += localTotalConnections;
         if (index < searchUrls.length - 1) {
           const randomSleep = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
           await new Promise((resolve) => setTimeout(resolve, randomSleep));
