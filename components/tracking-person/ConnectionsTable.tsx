@@ -30,6 +30,7 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
   const { id } = useParams();
   const [connections, setConnections] = useState<Connection[]>([]);
   const [syncDates, setSyncDates] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
     currentPage: 1,
@@ -39,11 +40,11 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
   const [selectedDate, setSelectedDate] = useState("");
   const { data: session } = useSession();
 
-  const fetchConnections = async (page: number = 1) => {
+  const fetchConnections = async (pageNum: number = currentPage) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
-        page: page.toString(),
+        page: pageNum.toString(),
         limit: "10",
         trackPersonId: id as string,
       });
@@ -70,25 +71,40 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
 
   useEffect(() => {
     if (session?.user.id) {
-      fetchConnections();
+      fetchConnections(currentPage);
     }
-  }, [selectedDate, session?.user.id]);
+  }, [selectedDate, session?.user.id, currentPage]);
 
   const handlePageChange = (newPage: number) => {
-    fetchConnections(newPage);
+    setCurrentPage(newPage);
   };
 
+  // Reset to first page when date filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDate]);
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
     });
   };
 
-  // Expose fetchConnections method through ref
   React.useImperativeHandle(ref, () => ({
-    fetchConnections: () => fetchConnections(),
+    fetchConnections: async () => {
+      try {
+        setCurrentPage(1);
+        await fetchConnections(1);
+      } catch (error) {
+        console.error("Error in fetchConnections:", error);
+        toast.error("Failed to refresh connections");
+      }
+    },
   }));
 
   return (

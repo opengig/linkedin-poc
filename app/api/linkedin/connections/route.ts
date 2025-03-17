@@ -69,14 +69,19 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(totalConnections / limit);
 
-    // Fetch paginated connections
+    // Fetch paginated connections with stable sorting
     const connections = await prisma.connection.findMany({
       where: whereClause,
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: {
-        syncedAt: "desc",
-      },
+      orderBy: [
+        {
+          syncedAt: "desc",
+        },
+        {
+          id: "asc", // Secondary sort by id for stability
+        },
+      ],
     });
 
     return NextResponse.json({

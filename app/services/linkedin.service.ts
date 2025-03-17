@@ -172,6 +172,7 @@ export class LinkedinService {
   static async syncConnections(searchUrls: string[], accountId: string, userId: string, trackPersonId: string) {
     try {
       console.log(`Syncing connections for ${searchUrls.length} search URLs`);
+      console.log(`Each page has max 50 connections`);
       const syncStartTime = new Date();
       let cursor = null;
       const connections = [];
@@ -179,17 +180,17 @@ export class LinkedinService {
       let index = 0;
 
       for (const searchUrl of searchUrls) {
-        console.log(`Syncing connections for url no. ${index + 1} of ${searchUrls.length}`);
+        console.log(`Syncing connections for url number ${index + 1} of ${searchUrls.length}`);
         let localTotalConnections = 0;
+        let page = 0;
         do {
           const { items, cursor: nextCursor } = await this.fetchConnections({
             accountId,
             searchUrl,
-            page: 1,
+            page: ++page,
             cursor,
             limit: 50,
           });
-          console.log(`Fetched ${items.length} connections for url no. ${index + 1} of ${searchUrls.length}`);
           if (items.length > 0) {
             const transformedConnections = items
               .map((item: any) => ({
@@ -229,24 +230,40 @@ export class LinkedinService {
           const batch = connections.slice(i, i + batchSize);
           await Promise.all(
             batch.map(async (connection) => {
-              await prisma.connection.upsert({
-                where: {
-                  userId_trackPersonId_username: {
+              try {
+                await prisma.connection.upsert({
+                  where: {
+                    userId_trackPersonId_username: {
+                      userId: userId,
+                      trackPersonId: trackPersonId,
+                      username: connection.username,
+                    },
+                  },
+                  create: {
                     userId: userId,
                     trackPersonId: trackPersonId,
                     username: connection.username,
+                    name: connection.name || "",
+                    avatar: connection.avatar || "",
+                    title: connection.title || "",
+                    location: connection.location || "",
+                    profileUrl: connection.profileUrl,
+                    degree: connection.degree || "",
+                    syncedAt: syncStartTime,
                   },
-                },
-                update: {
-                  ...connection,
-                },
-                create: {
-                  ...connection,
-                  userId: userId,
-                  trackPersonId: trackPersonId,
-                  syncedAt: syncStartTime,
-                },
-              });
+                  update: {
+                    name: connection.name || "",
+                    avatar: connection.avatar || "",
+                    title: connection.title || "",
+                    location: connection.location || "",
+                    profileUrl: connection.profileUrl,
+                    degree: connection.degree || "",
+                  },
+                });
+              } catch (error: any) {
+                console.error(`Error upserting connection: connection username ${connection.username}`);
+                console.log(error.message);
+              }
             })
           );
         }

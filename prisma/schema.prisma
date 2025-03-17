@@ -66,8 +66,8 @@ model SearchUrls {
   updatedAt     DateTime @updatedAt
 
   // Relations
-  user        User        @relation(fields: [userId], references: [id])
-  trackPerson TrackPerson @relation(fields: [trackPersonId], references: [id])
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackPerson TrackPerson @relation(fields: [trackPersonId], references: [id], onDelete: Cascade)
 }
 
 model Connection {
@@ -76,19 +76,19 @@ model Connection {
   trackPersonId String   @db.ObjectId
   username      String
   name          String
-  avatar        String
-  title         String
-  location      String
+  avatar        String?
+  title         String?
+  location      String?
   insight       String?
   profileUrl    String
-  degree        String
+  degree        String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   syncedAt      DateTime
 
   // Relations
-  user        User        @relation(fields: [userId], references: [id])
-  trackPerson TrackPerson @relation(fields: [trackPersonId], references: [id])
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackPerson TrackPerson @relation(fields: [trackPersonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, trackPersonId, username])
   @@index([userId])
