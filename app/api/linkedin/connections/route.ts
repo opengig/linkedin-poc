@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { trackPersonId, userId } = await request.json();
+    const { trackPersonId, userId, searchUrlId } = await request.json();
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized", success: false });
@@ -145,12 +145,23 @@ export async function POST(request: NextRequest) {
     if (!linkedinDetails || !linkedinDetails.accountId) {
       return NextResponse.json({ error: "LinkedIn details not found", success: false });
     }
-    const searchUrls = await prisma.searchUrls.findMany({
-      where: {
-        userId: userId,
-        trackPersonId: trackPersonId,
-      },
-    });
+    let searchUrls = [];
+
+    if (searchUrlId) {
+      searchUrls = await prisma.searchUrls.findMany({
+        where: {
+          id: searchUrlId,
+          userId: userId,
+        },
+      });
+    } else {
+      searchUrls = await prisma.searchUrls.findMany({
+        where: {
+          userId: userId,
+          trackPersonId: trackPersonId,
+        },
+      });
+    }
 
     const searchUrlsArray = searchUrls.map((searchUrl) => {
       return {

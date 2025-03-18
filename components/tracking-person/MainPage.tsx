@@ -18,6 +18,7 @@ const MainPage = ({ person }: { person: any }) => {
   const { data: session } = useSession();
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncingUrlIds, setSyncingUrlIds] = useState<string[]>([]);
 
   const [urls, setUrls] = useState<any[]>([]);
 
@@ -35,12 +36,25 @@ const MainPage = ({ person }: { person: any }) => {
     }
   };
 
-  const handleSync = async () => {
+  const handleSyncingStates = (state: boolean, urlId?: string) => {
+    if (urlId) {
+      if (state) {
+        setSyncingUrlIds((prev) => [...prev, urlId]);
+      } else {
+        setSyncingUrlIds((prev) => prev.filter((id) => id !== urlId));
+      }
+    } else {
+      setIsSyncing(state);
+    }
+  };
+
+  const handleSync = async (searchUrlId?: string) => {
     try {
-      setIsSyncing(true);
+      handleSyncingStates(true, searchUrlId);
       const { data } = await axios.post("/api/linkedin/connections", {
         trackPersonId: person.id,
         userId: session?.user.id,
+        ...(searchUrlId && { searchUrlId }),
       });
       if (data.success) {
         toast.success("Synced successfully");
@@ -52,7 +66,7 @@ const MainPage = ({ person }: { person: any }) => {
       console.error("Error syncing:", error);
       toast.error("Failed to sync");
     } finally {
-      setIsSyncing(false);
+      handleSyncingStates(false, searchUrlId);
     }
   };
 
@@ -71,7 +85,7 @@ const MainPage = ({ person }: { person: any }) => {
         setShowAddForm={setShowAddForm}
         trackPersonId={person.id}
       />
-      <SearchUrls urls={urls} fetchUrls={fetchUrls} />
+      <SearchUrls urls={urls} fetchUrls={fetchUrls} onSync={handleSync} syncingUrlIds={syncingUrlIds} />
       <div className="mt-8">
         <ConnectionsTable ref={connectionsTableRef} />
       </div>

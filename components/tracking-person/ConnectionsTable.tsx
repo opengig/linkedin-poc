@@ -154,9 +154,9 @@ const ConnectionsTable = React.forwardRef<ConnectionsTableRef>((props, ref) => {
               setSelectedSearchUrlIds(value);
             }}
             defaultValue={searchUrlOptions.map((option) => option.value)}
-            placeholder="Select URLs"
+            placeholder="All Urls"
             variant="inverted"
-            maxCount={Infinity}
+            maxCount={3}
           />
         </div>
       </div>

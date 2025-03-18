@@ -5,7 +5,9 @@ import { Input } from "../ui/input";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { LoadingButton } from "../ui/loading-button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { TooltipContent } from "../ui/tooltip";
+import { Tooltip, TooltipTrigger } from "../ui/tooltip";
 
 interface SearchUrl {
   id: string;
@@ -17,9 +19,11 @@ interface SearchUrl {
 interface SearchUrlsProps {
   urls: SearchUrl[];
   fetchUrls: () => void;
+  onSync: (urlId: string) => void;
+  syncingUrlIds: string[];
 }
 
-const SearchUrls = ({ urls, fetchUrls }: SearchUrlsProps) => {
+const SearchUrls = ({ urls, fetchUrls, onSync, syncingUrlIds }: SearchUrlsProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editUrl, setEditUrl] = useState("");
@@ -114,7 +118,42 @@ const SearchUrls = ({ urls, fetchUrls }: SearchUrlsProps) => {
             <>
               <div className="flex justify-between items-center">
                 <div className="flex-1">
-                  <h3 className="font-semibold">{url.title}</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold">{url.title}</h3>
+                    <div className="flex items-center space-x-2">
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => onSync(url.id)}
+                            size={"sm"}
+                            variant="outline"
+                            className="flex items-center space-x-2"
+                          >
+                            {syncingUrlIds.includes(url.id) ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">Sync connections from this URL</TooltipContent>
+                      </Tooltip>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(url)}
+                        disabled={isLoading}
+                        className="h-8 w-8"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(url.id)}
+                        disabled={isLoading}
+                        className="h-8 w-8 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                   <a
                     href={url.url}
                     target="_blank"
@@ -123,26 +162,6 @@ const SearchUrls = ({ urls, fetchUrls }: SearchUrlsProps) => {
                   >
                     {url.url}
                   </a>
-                </div>
-                <div className="flex gap-2 ml-4">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(url)}
-                    disabled={isLoading}
-                    className="h-8 w-8"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(url.id)}
-                    disabled={isLoading}
-                    className="h-8 w-8 text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             </>

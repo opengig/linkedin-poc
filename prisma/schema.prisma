@@ -102,7 +102,7 @@ model Connection {
   trackPerson TrackPerson @relation(fields: [trackPersonId], references: [id], onDelete: Cascade)
   searchUrl   SearchUrls? @relation(fields: [searchUrlId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, trackPersonId, username])
+  @@unique([userId, trackPersonId, username, searchUrlId])
   @@index([userId])
   @@index([trackPersonId])
   @@index([userId, trackPersonId])

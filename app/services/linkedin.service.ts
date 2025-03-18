@@ -194,14 +194,14 @@ export class LinkedinService {
           if (items.length > 0) {
             const transformedConnections = items
               .map((item: any) => ({
-                username: item.public_identifier,
-                name: item.name,
-                avatar: item.profile_picture_url,
-                title: item.headline,
-                location: item.location,
+                username: item?.public_identifier,
+                name: item?.name,
+                avatar: item?.profile_picture_url,
+                title: item?.headline,
+                location: item?.location,
                 insight: item?.insight || null,
                 profileUrl: `https://www.linkedin.com/in/${item.public_identifier}`,
-                degree: item.network_distance || "",
+                degree: item?.network_distance || "",
                 searchUrlId: searchUrl.id,
               }))
               .filter((connection: any) => connection.username !== null);
@@ -234,10 +234,11 @@ export class LinkedinService {
               try {
                 await prisma.connection.upsert({
                   where: {
-                    userId_trackPersonId_username: {
+                    userId_trackPersonId_username_searchUrlId: {
                       userId: userId,
                       trackPersonId: trackPersonId,
                       username: connection.username,
+                      searchUrlId: connection.searchUrlId,
                     },
                   },
                   create: {
